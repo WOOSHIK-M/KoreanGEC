@@ -1,0 +1,22 @@
+name: "Repo CI] Python Code"
+
+on:
+  pull_request:
+
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Make Container
+        run: make docker-run-git-action
+
+      - name: Install pre commit
+        run: |
+          pip install pre-commit
+          pre-commit install
+
+      - name: Run pre-commit
+        run: make pre-commit-all
