@@ -1,12 +1,12 @@
 [project]
-name = "Default_Project"
+name = "KoreanGEC"
 version = "0.1.0"
 description = "Default template for PDM package"
 authors = [
     {name = "WOOSHIK-M", email = "wooshik.m@gmail.com"},
 ]
-dependencies = []
-requires-python = "==3.11.*"
+dependencies = ["torch>=2.5.1", "torchvision>=0.20.1", "torchaudio>=2.5.1", "transformers>=4.46.2", "pandas>=2.2.3", "pytorch-lightning>=2.4.0", "jupyter>=1.1.1", "notebook>=7.2.2"]
+requires-python = "==3.10.*"
 readme = "README.md"
 license = {text = "MIT"}
 
