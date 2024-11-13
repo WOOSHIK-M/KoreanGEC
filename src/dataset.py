@@ -26,6 +26,22 @@ class CustomDataset(Dataset):
         """
         pass
 
+    @staticmethod
+    def tokenize(sentence: str, tokenizer: PreTrainedTokenizer) -> dict[str, torch.Tensor]:
+        """Tokenize a given sentence."""
+        inputs = tokenizer(
+            sentence,
+            truncation=True,
+            padding="max_length",
+            max_length=128,
+            return_tensors="pt",
+        )
+        inputs = {
+            "input_ids": inputs["input_ids"].squeeze(0),
+            "attention_mask": inputs["attention_mask"].squeeze(0),
+        }
+        return inputs
+
     def __init__(self, data: list | dict | pd.DataFrame, tokenizer: PreTrainedTokenizer) -> None:
         """Initializer."""
         self.data = data
@@ -38,17 +54,7 @@ class CustomDataset(Dataset):
     def __getitem__(self, idx: int) -> tuple[dict[str, torch.Tensor], torch.Tensor]:
         """Get a data of the given index."""
         sentence, label = self.get_item(idx)
-        inputs = self.tokenizer(
-            sentence,
-            truncation=True,
-            padding="max_length",
-            max_length=128,
-            return_tensors="pt",
-        )
-        inputs = {
-            "input_ids": inputs["input_ids"].squeeze(0),
-            "attention_mask": inputs["attention_mask"].squeeze(0),
-        }
+        inputs = self.tokenize(sentence, self.tokenizer)
         label = torch.tensor(label)
         return inputs, label
 
@@ -66,6 +72,12 @@ class KNCTDataset(CustomDataset):
 
         with open(file_path) as f:
             raw_data = json.load(f)["data"]
+
+        for data in raw_data:
+            for error_idx in range(1, data["number of error"]):
+                tg1, tg2 = f"<e{error_idx}>", f"/<e{error_idx}>"
+                data["error_sentence"] = data["error_sentence"].replace(tg1, "")
+                data["error_sentence"] = data["error_sentence"].replace(tg2, "")
         return KNCTDataset(raw_data, tokenizer)
 
     def count_data(self) -> int:
@@ -96,8 +108,10 @@ class MyDataset:
         knct_dataset = KNCTDataset.load(tokenizer)
         dataset = knct_dataset
 
+        shuffled_indices = torch.randperm(len(dataset)).tolist()
+
         # split train & val dataset
         n_val = int(len(dataset) * self.val_ratio)
-        train_dataset = Subset(dataset, range(0, len(dataset) - n_val))
-        val_dataset = Subset(dataset, range(len(dataset) - n_val, len(dataset)))
+        train_dataset = Subset(dataset, shuffled_indices[: len(dataset) - n_val])
+        val_dataset = Subset(dataset, shuffled_indices[-n_val:])
         return train_dataset, val_dataset

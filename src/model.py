@@ -39,7 +39,6 @@ class CustomHuggingfaceModel(nn.Module):
 
         self.model = self.load_model()
         self.tokenizer = self.load_tokenizer()
-        print("Initialized!")
 
 
 class BertBaseUncased(CustomHuggingfaceModel):
@@ -48,7 +47,8 @@ class BertBaseUncased(CustomHuggingfaceModel):
     https://huggingface.co/google-bert/bert-base-uncased
     """
 
-    MODEL_ID = "bert-base-uncased"
+    # MODEL_ID = "bert-base-uncased"
+    MODEL_ID = "bert-base-multilingual-cased"
 
     def forward(self, inputs: dict[str, torch.Tensor]) -> torch.Tensor:
         """Forward."""
@@ -56,13 +56,11 @@ class BertBaseUncased(CustomHuggingfaceModel):
 
     def load_tokenizer(self) -> PreTrainedTokenizer:
         """Get a tokenizer of this model."""
-        return AutoTokenizer.from_pretrained(BertBaseUncased.MODEL_ID)
+        return AutoTokenizer.from_pretrained(self.MODEL_ID)
 
     def load_model(self) -> PreTrainedModel:
         """Get a model to be fine-tuned."""
-        return AutoModelForSequenceClassification.from_pretrained(
-            BertBaseUncased.MODEL_ID, num_labels=2
-        )
+        return AutoModelForSequenceClassification.from_pretrained(self.MODEL_ID, num_labels=2)
 
 
 class TorchLightningModel(pl.LightningModule):
@@ -83,6 +81,7 @@ class TorchLightningModel(pl.LightningModule):
     ) -> None:
         """Initialize."""
         super().__init__()
+        self.save_hyperparameters()
 
         assert model_name in self.MODEL_DICT, f"Undefined model name: {model_name}"
 

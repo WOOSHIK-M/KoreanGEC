@@ -1,10 +1,15 @@
 from typing import Any
 
 import pytorch_lightning as pl
+import torch
 from torch.utils.data import DataLoader
+from transformers import logging
 
-from src.dataset import MyDataset
+from src.dataset import CustomDataset, MyDataset
 from src.model import TorchLightningModel
+
+logging.set_verbosity_error()
+torch.set_float32_matmul_precision("high")
 
 
 class Trainer:
@@ -20,9 +25,14 @@ class Trainer:
             lr=self.config["lr"],
             weight_decay=self.config["weight_decay"],
         )
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def run(self) -> None:
         """Do train or evaluation."""
+        self.eval() if self.config["eval"] else self.train()
+
+    def train(self) -> None:
+        """Fine-tune the model."""
         # prepare dataloader
         train_dataset, val_dataset = self.dataset.load(self.model.tokenizer)
         train_loader = DataLoader(
@@ -34,9 +44,48 @@ class Trainer:
         val_loader = DataLoader(val_dataset, batch_size=self.config["batch_size"], num_workers=4)
 
         # create trainer and run it!
+        checkpoint_callback = pl.callbacks.ModelCheckpoint(  # type: ignore
+            monitor="val_loss",
+            dirpath="save",
+            filename="{val_loss:.4f}",
+            save_top_k=3,
+            mode="min",
+        )
         trainer = pl.Trainer(
+            default_root_dir="save",
             max_epochs=self.config["max_epochs"],
-            log_every_n_steps=10,
-            check_val_every_n_epoch=1,
+            val_check_interval=0.2,
+            callbacks=[checkpoint_callback],
+            logger=True,
         )
         trainer.fit(self.model, train_loader, val_loader)
+
+    def eval(self) -> None:
+        """."""
+        trainer = pl.Trainer()
+
+        model = self.model
+        if self.config["checkpoint"]:
+            model = TorchLightningModel.load_from_checkpoint(self.config["checkpoint"])
+        model.to(self.device)
+
+        if self.config["test"]:
+            self.do_inference_with_txt(self.config["test"], model)
+        else:
+            val_dataset = self.dataset.load(self.model.tokenizer)[1]
+            val_loader = DataLoader(
+                val_dataset, batch_size=self.config["batch_size"], num_workers=4
+            )
+            trainer.validate(model, val_loader)
+
+    def do_inference_with_txt(self, fpath, model):
+        with open(fpath) as f:
+            for sentence in f:
+                sentence = sentence.strip()
+
+                inputs = CustomDataset.tokenize(sentence, model.tokenizer)
+                inputs = {k: v.unsqueeze(0).to(self.device) for k, v in inputs.items()}
+                outputs = model(inputs)
+
+                answer = outputs.squeeze().argmax().bool().item()
+                print(f"[Text] {sentence} ({answer})")
