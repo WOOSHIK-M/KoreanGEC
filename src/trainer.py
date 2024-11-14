@@ -1,3 +1,4 @@
+import shutil
 from typing import Any
 
 import pytorch_lightning as pl
@@ -44,6 +45,7 @@ class Trainer:
         val_loader = DataLoader(val_dataset, batch_size=self.config["batch_size"], num_workers=4)
 
         # create trainer and run it!
+        shutil.rmtree("save")
         checkpoint_callback = pl.callbacks.ModelCheckpoint(  # type: ignore
             monitor="val_loss",
             dirpath="save",

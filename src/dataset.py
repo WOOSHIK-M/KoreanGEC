@@ -33,7 +33,7 @@ class CustomDataset(Dataset):
             sentence,
             truncation=True,
             padding="max_length",
-            max_length=128,
+            max_length=512,
             return_tensors="pt",
         )
         inputs = {
@@ -74,8 +74,8 @@ class KNCTDataset(CustomDataset):
             raw_data = json.load(f)["data"]
 
         for data in raw_data:
-            for error_idx in range(1, data["number of error"]):
-                tg1, tg2 = f"<e{error_idx}>", f"/<e{error_idx}>"
+            for error_idx in range(1, data["number of error"] + 1):
+                tg1, tg2 = f"<e{error_idx}>", f"</e{error_idx}>"
                 data["error_sentence"] = data["error_sentence"].replace(tg1, "")
                 data["error_sentence"] = data["error_sentence"].replace(tg2, "")
         return KNCTDataset(raw_data, tokenizer)
@@ -106,8 +106,8 @@ class MyDataset:
     def load(self, tokenizer: PreTrainedTokenizer) -> tuple[Dataset, Dataset]:
         """Load all train and val dataset."""
         knct_dataset = KNCTDataset.load(tokenizer)
-        dataset = knct_dataset
 
+        dataset = knct_dataset
         shuffled_indices = torch.randperm(len(dataset)).tolist()
 
         # split train & val dataset

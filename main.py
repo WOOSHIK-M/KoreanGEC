@@ -20,11 +20,11 @@ def main():
 @click.option("--batch-size", type=int, default=8, help="Batch size.")
 @click.option("--lr", type=float, default=1e-5, help="Learning rate.")
 @click.option("--weight-decay", type=float, default=0.01, help="Weight decay of learning rate.")
-@click.option("--gpu", type=str, default="", help="Choose gpu(s) to be used(e.g. --gpu 0,1).")
+@click.option("--gpus", type=str, default="", help="Choose gpu(s) to be used(e.g. --gpu 0,1).")
 def run(**config) -> None:
     """Run."""
-    if config["gpu"]:
-        os.environ["CUDA_VISIBLE_DEVICES"] = config["gpu"]
+    if config["gpus"]:
+        os.environ["CUDA_VISIBLE_DEVICES"] = config["gpus"]
 
     Trainer(config).run()
 
