@@ -116,9 +116,7 @@ class KorLang8Dataset(CustomDataset):
             raw_data = f.read().strip()
 
         lines = raw_data.split("\n")
-        data = {
-            (sentence, idx % 2) for line in lines for idx, sentence in enumerate(line.split("\t"))
-        }
+        data = [(sentence, idx % 2) for line in lines for idx, sentence in enumerate(line.split("\t"))]
         assert len(data) == len(lines) * 2
         return KorLang8Dataset(list(set(data)), tokenizer)
 
@@ -153,10 +151,7 @@ class KoreanLearnerNative(CustomDataset):
 
             lines = raw_data.split("\n")
             data += [
-                (sentence, idx % 2)
-                for line in lines
-                for idx, sentence in enumerate(line.split("\t"))
-                if line
+                (sentence, idx % 2) for line in lines for idx, sentence in enumerate(line.split("\t")) if line
             ]
         return KorLang8Dataset(list(set(data)), tokenizer)
 
@@ -213,8 +208,8 @@ class MyDataset:
         train_dataset = ConcatDataset(
             [
                 KNCTDataset.load(tokenizer),
-                # KorLang8Dataset.load(tokenizer),
-                # KoreanLearnerNative.load(tokenizer),
+                KorLang8Dataset.load(tokenizer),
+                KoreanLearnerNative.load(tokenizer),
             ]
         )
         print(f"The size of data: {len(train_dataset)}")

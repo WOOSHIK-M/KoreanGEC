@@ -5,7 +5,9 @@ repos:
     rev: v4.4.0
     hooks:
       - id: end-of-file-fixer
+        exclude: data
       - id: trailing-whitespace
+        exclude: data
       - id: check-yaml
       - id: check-docstring-first
       - id: check-executables-have-shebangs
@@ -13,7 +15,7 @@ repos:
       - id: check-case-conflict
       - id: check-added-large-files
         args: ['--maxkb=50000', '--enforce-all']
-        exclude: |
+        exclude: data |
             (?x)^(
                 docs/source-pytorch/_static/images/general/fast_2.gif|
                 docs/source-pytorch/_static/images/mnist_imgs/pt_to_pl.jpg|
@@ -52,6 +54,7 @@ repos:
       - id: flake8
         name: Check PEP8
         args: [--max-line-length=120, "--ignore=E121,E123,E126,E203,E226,E24,E704,W503,W504", "--per-file-ignores=__init__.py:F401"]
+        exclude: data
 
   - repo: https://github.com/PyCQA/isort
     rev: 5.13.2
@@ -66,7 +69,7 @@ repos:
       - id: black
         args: [--line-length=100]
         name: Format code
-        exclude: docs/source-app
+        exclude: data
 
   - repo: https://github.com/asottile/blacken-docs
     rev: 1.13.0
@@ -74,7 +77,7 @@ repos:
       - id: blacken-docs
         args: [--line-length=120]
         additional_dependencies: [black==23.1.0]
-        exclude: docs/source-app
+        exclude: data
 
   - repo: https://github.com/executablebooks/mdformat
     rev: 0.7.16

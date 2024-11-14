@@ -87,6 +87,9 @@ class Trainer:
         with open(fpath) as f:
             for sentence in f:
                 sentence = sentence.strip()[:-1]
+                if not sentence:
+                    print()
+                    continue
 
                 inputs = CustomDataset.tokenize(sentence, model.tokenizer)
                 inputs = {k: v.unsqueeze(0).to(self.device) for k, v in inputs.items()}
