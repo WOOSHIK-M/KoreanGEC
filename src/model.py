@@ -8,7 +8,12 @@ import torch.optim as optim
 from huggingface_hub import login as huggingface_login
 from torch.optim.optimizer import Optimizer
 from torchmetrics import Accuracy
-from transformers import AutoModel, AutoTokenizer, PreTrainedModel, PreTrainedTokenizer
+from transformers import (
+    AutoModelForSequenceClassification,
+    AutoTokenizer,
+    PreTrainedModel,
+    PreTrainedTokenizer,
+)
 
 from src.config import HUGGINGFACE_KEY
 
@@ -47,18 +52,15 @@ class BertBaseUncased(CustomHuggingfaceModel):
 
     def forward(self, inputs: dict[str, torch.Tensor]) -> torch.Tensor:
         """Forward."""
-        import pdb
-
-        pdb.set_trace()
         return self.model(**inputs).logits
 
     def load_tokenizer(self) -> PreTrainedTokenizer:
         """Get a tokenizer of this model."""
-        return AutoTokenizer.from_pretrained("skt/kobert-base-v1", trust_remote_code=True)
+        return AutoTokenizer.from_pretrained(self.MODEL_ID, trust_remote_code=True)
 
     def load_model(self) -> PreTrainedModel:
         """Get a model to be fine-tuned."""
-        return AutoModel.from_pretrained("skt/kobert-base-v1")
+        return AutoModelForSequenceClassification.from_pretrained(self.MODEL_ID, num_labels=2)
 
 
 class TorchLightningModel(pl.LightningModule):
