@@ -111,7 +111,7 @@ class KorLang8Dataset(CustomDataset):
         assert file_path.exists, f"Not found, {file_path}"
 
         with open(file_path) as f:
-            raw_data = f.read()
+            raw_data = f.read().strip()
 
         lines = raw_data.split("\n")
         data = [

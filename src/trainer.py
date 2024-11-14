@@ -40,9 +40,11 @@ class Trainer:
             train_dataset,
             batch_size=self.config["batch_size"],
             shuffle=True,
-            num_workers=4,
+            num_workers=10,
         )
-        val_loader = DataLoader(val_dataset, batch_size=self.config["batch_size"], num_workers=4)
+        val_loader = DataLoader(
+            val_dataset, batch_size=self.config["batch_size"] * 2, num_workers=10
+        )
 
         # create trainer and run it!
         shutil.rmtree("save")
