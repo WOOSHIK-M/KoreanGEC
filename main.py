@@ -13,7 +13,7 @@ def main():
 @click.command()
 @click.option("--eval", is_flag=True, default=False, help="Evaluation mode.")
 @click.option("--checkpoint", type=str, default="", help="Checkpoint path.")
-@click.option("--test", type=str, default="test.txt", help="test file path.")
+@click.option("--test", type=str, default="data/test.txt", help="test file path.")
 @click.option("--model", type=str, default="bertbase", help="Choose a model to be fine-tuned.")
 @click.option("--max-epochs", type=int, default=3, help="The maximum epochs to fine-tune.")
 @click.option("--val-ratio", type=float, default=0.3, help="The ratio of validate dataset.")

@@ -112,9 +112,9 @@ class TorchLightningModel(pl.LightningModule):
         """Do inference for validation."""
         inputs, labels = batch
         pred = self(inputs)
-        loss = self.loss_fn(pred, labels)
-
-        self.log("val_loss", loss, prog_bar=True, sync_dist=True)
+        acc = self.accuracy(pred, labels)
+        # loss = self.loss_fn(pred, labels)
+        self.log("acc", acc, prog_bar=True, sync_dist=True)
 
     def configure_optimizers(self) -> Optimizer:
         """Get optimizer."""

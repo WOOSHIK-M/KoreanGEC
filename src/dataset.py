@@ -4,7 +4,9 @@ from pathlib import Path
 
 import pandas as pd
 import torch
-from torch.utils.data import ConcatDataset, Dataset, Subset
+from torch.utils.data import ConcatDataset, Dataset
+
+# from torch.utils.data import Subset
 from transformers import PreTrainedTokenizer
 
 DATA_DIR = "data"
@@ -68,7 +70,7 @@ class KNCTDataset(CustomDataset):
     def load(tokenizer: PreTrainedTokenizer) -> "KNCTDataset":
         """Load this dataset."""
         file_path = Path(DATA_DIR) / KNCTDataset.FILE_PATH
-        assert file_path.exists, f"Not found, {file_path}"
+        assert file_path.exists(), f"Not found, {file_path}"
 
         with open(file_path) as f:
             raw_data = json.load(f)["data"]
@@ -108,7 +110,7 @@ class KorLang8Dataset(CustomDataset):
     def load(tokenizer: PreTrainedTokenizer) -> "KorLang8Dataset":
         """Load this dataset."""
         file_path = Path(DATA_DIR) / KorLang8Dataset.FILE_PATH
-        assert file_path.exists, f"Not found, {file_path}"
+        assert file_path.exists(), f"Not found, {file_path}"
 
         with open(file_path) as f:
             raw_data = f.read().strip()
@@ -144,7 +146,7 @@ class KoreanLearnerNative(CustomDataset):
         data = []
         for file_path in KoreanLearnerNative.FILE_PATHS:
             file_path = Path(DATA_DIR) / file_path
-            assert file_path.exists, f"Not found, {file_path}"
+            assert file_path.exists(), f"Not found, {file_path}"
 
             with open(file_path) as f:
                 raw_data = f.read().strip()
@@ -167,6 +169,38 @@ class KoreanLearnerNative(CustomDataset):
         return self.data[idx]
 
 
+class TestDataset(CustomDataset):
+    """A test dataset."""
+
+    FILE_PATH = "test.txt"
+
+    @staticmethod
+    def load(tokenizer: PreTrainedTokenizer) -> "KorLang8Dataset":
+        """Load this dataset."""
+        file_path = Path(DATA_DIR) / TestDataset.FILE_PATH
+        assert file_path.exists(), f"Not found, {file_path}"
+
+        with open(file_path) as f:
+            raw_data = f.read().strip()
+
+        data = []
+        for line in raw_data.split("\n"):
+            if not line:
+                continue
+
+            sentence, label = line[:-1], int(line[-1] == "O")
+            data.append((sentence, label))
+        return KorLang8Dataset(list(set(data)), tokenizer)
+
+    def count_data(self) -> int:
+        """Count the number of data."""
+        return len(self.data)
+
+    def get_item(self, idx: int) -> tuple[str, int]:
+        """Get a item."""
+        return self.data[idx]
+
+
 class MyDataset:
     """A dataset to be used to fine-tuning."""
 
@@ -176,18 +210,21 @@ class MyDataset:
 
     def load(self, tokenizer: PreTrainedTokenizer) -> tuple[Dataset, Dataset]:
         """Load all train and val dataset."""
-        dataset = ConcatDataset(
+        train_dataset = ConcatDataset(
             [
-                # KNCTDataset.load(tokenizer),
+                KNCTDataset.load(tokenizer),
                 # KorLang8Dataset.load(tokenizer),
-                KoreanLearnerNative.load(tokenizer),
+                # KoreanLearnerNative.load(tokenizer),
             ]
         )
-        print(f"The size of data: {len(dataset)}")
-        shuffled_indices = torch.randperm(len(dataset)).tolist()
+        print(f"The size of data: {len(train_dataset)}")
 
-        # split train & val dataset
-        n_val = int(len(dataset) * self.val_ratio)
-        train_dataset = Subset(dataset, shuffled_indices[: len(dataset) - n_val])
-        val_dataset = Subset(dataset, shuffled_indices[-n_val:])
+        val_dataset = TestDataset.load(tokenizer)
+
+        # shuffled_indices = torch.randperm(len(dataset)).tolist()
+
+        # # split train & val dataset
+        # n_val = int(len(dataset) * self.val_ratio)
+        # train_dataset = Subset(dataset, shuffled_indices[: len(dataset) - n_val])
+        # val_dataset = Subset(dataset, shuffled_indices[-n_val:])
         return train_dataset, val_dataset

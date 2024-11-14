@@ -43,23 +43,23 @@ class Trainer:
             shuffle=True,
             num_workers=10,
         )
-        val_loader = DataLoader(val_dataset, batch_size=self.config["batch_size"], num_workers=10)
+        val_loader = DataLoader(val_dataset, batch_size=len(val_dataset), num_workers=10)
 
         # create trainer and run it!
-        save_dir = "save1"
+        save_dir = "save"
         if Path(save_dir).exists():
             shutil.rmtree(save_dir)
         checkpoint_callback = pl.callbacks.ModelCheckpoint(  # type: ignore
-            monitor="val_loss",
+            monitor="acc",
             dirpath=save_dir,
-            filename="{val_loss:.4f}",
+            filename="{acc:.4f}",
             save_top_k=3,
-            mode="min",
+            mode="max",
         )
         trainer = pl.Trainer(
             default_root_dir=save_dir,
             max_epochs=self.config["max_epochs"],
-            val_check_interval=0.2,
+            val_check_interval=0.05,
             callbacks=[checkpoint_callback],
             logger=True,
         )
@@ -86,7 +86,7 @@ class Trainer:
     def do_inference_with_txt(self, fpath, model):
         with open(fpath) as f:
             for sentence in f:
-                sentence = sentence.strip()
+                sentence = sentence.strip()[:-1]
 
                 inputs = CustomDataset.tokenize(sentence, model.tokenizer)
                 inputs = {k: v.unsqueeze(0).to(self.device) for k, v in inputs.items()}
