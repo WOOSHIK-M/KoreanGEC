@@ -114,11 +114,49 @@ class KorLang8Dataset(CustomDataset):
             raw_data = f.read().strip()
 
         lines = raw_data.split("\n")
-        data = [
+        data = {
             (sentence, idx % 2) for line in lines for idx, sentence in enumerate(line.split("\t"))
-        ]
+        }
         assert len(data) == len(lines) * 2
-        return KorLang8Dataset(data, tokenizer)
+        return KorLang8Dataset(list(set(data)), tokenizer)
+
+    def count_data(self) -> int:
+        """Count the number of data."""
+        return len(self.data)
+
+    def get_item(self, idx: int) -> tuple[str, int]:
+        """Get a item."""
+        return self.data[idx]
+
+
+class KoreanLearnerNative(CustomDataset):
+    """A Korean learner & native dataset.
+
+    https://github.com/soyoung97/Standard_Korean_GEC
+    """
+
+    FILE_PATHS = ["union.txt", "union_val.txt"]
+
+    staticmethod
+
+    def load(tokenizer: PreTrainedTokenizer) -> "KorLang8Dataset":
+        """Load this dataset."""
+        data = []
+        for file_path in KoreanLearnerNative.FILE_PATHS:
+            file_path = Path(DATA_DIR) / file_path
+            assert file_path.exists, f"Not found, {file_path}"
+
+            with open(file_path) as f:
+                raw_data = f.read().strip()
+
+            lines = raw_data.split("\n")
+            data += [
+                (sentence, idx % 2)
+                for line in lines
+                for idx, sentence in enumerate(line.split("\t"))
+                if line
+            ]
+        return KorLang8Dataset(list(set(data)), tokenizer)
 
     def count_data(self) -> int:
         """Count the number of data."""
@@ -140,10 +178,12 @@ class MyDataset:
         """Load all train and val dataset."""
         dataset = ConcatDataset(
             [
-                KorLang8Dataset.load(tokenizer),
                 # KNCTDataset.load(tokenizer),
+                # KorLang8Dataset.load(tokenizer),
+                KoreanLearnerNative.load(tokenizer),
             ]
         )
+        print(f"The size of data: {len(dataset)}")
         shuffled_indices = torch.randperm(len(dataset)).tolist()
 
         # split train & val dataset

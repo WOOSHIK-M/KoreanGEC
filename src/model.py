@@ -114,7 +114,7 @@ class TorchLightningModel(pl.LightningModule):
         pred = self(inputs)
         loss = self.loss_fn(pred, labels)
 
-        self.log("val_loss", loss, prog_bar=True)
+        self.log("val_loss", loss, prog_bar=True, sync_dist=True)
 
     def configure_optimizers(self) -> Optimizer:
         """Get optimizer."""

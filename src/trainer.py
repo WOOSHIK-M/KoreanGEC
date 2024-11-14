@@ -1,4 +1,5 @@
 import shutil
+from pathlib import Path
 from typing import Any
 
 import pytorch_lightning as pl
@@ -42,21 +43,21 @@ class Trainer:
             shuffle=True,
             num_workers=10,
         )
-        val_loader = DataLoader(
-            val_dataset, batch_size=self.config["batch_size"] * 2, num_workers=10
-        )
+        val_loader = DataLoader(val_dataset, batch_size=self.config["batch_size"], num_workers=10)
 
         # create trainer and run it!
-        shutil.rmtree("save")
+        save_dir = "save1"
+        if Path(save_dir).exists():
+            shutil.rmtree(save_dir)
         checkpoint_callback = pl.callbacks.ModelCheckpoint(  # type: ignore
             monitor="val_loss",
-            dirpath="save",
+            dirpath=save_dir,
             filename="{val_loss:.4f}",
             save_top_k=3,
             mode="min",
         )
         trainer = pl.Trainer(
-            default_root_dir="save",
+            default_root_dir=save_dir,
             max_epochs=self.config["max_epochs"],
             val_check_interval=0.2,
             callbacks=[checkpoint_callback],
