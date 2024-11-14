@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pandas as pd
 import torch
-from torch.utils.data import Dataset, Subset
+from torch.utils.data import ConcatDataset, Dataset, Subset
 from transformers import PreTrainedTokenizer
 
 DATA_DIR = "data"
@@ -96,6 +96,39 @@ class KNCTDataset(CustomDataset):
         return sentence, is_correct
 
 
+class KorLang8Dataset(CustomDataset):
+    """A kor-lang8 dataset.
+
+    https://github.com/soyoung97/Standard_Korean_GEC
+    """
+
+    FILE_PATH = "kor_lang8.txt"
+
+    @staticmethod
+    def load(tokenizer: PreTrainedTokenizer) -> "KorLang8Dataset":
+        """Load this dataset."""
+        file_path = Path(DATA_DIR) / KorLang8Dataset.FILE_PATH
+        assert file_path.exists, f"Not found, {file_path}"
+
+        with open(file_path) as f:
+            raw_data = f.read()
+
+        lines = raw_data.split("\n")
+        data = [
+            (sentence, idx % 2) for line in lines for idx, sentence in enumerate(line.split("\t"))
+        ]
+        assert len(data) == len(lines) * 2
+        return KorLang8Dataset(data, tokenizer)
+
+    def count_data(self) -> int:
+        """Count the number of data."""
+        return len(self.data)
+
+    def get_item(self, idx: int) -> tuple[str, int]:
+        """Get a item."""
+        return self.data[idx]
+
+
 class MyDataset:
     """A dataset to be used to fine-tuning."""
 
@@ -105,9 +138,12 @@ class MyDataset:
 
     def load(self, tokenizer: PreTrainedTokenizer) -> tuple[Dataset, Dataset]:
         """Load all train and val dataset."""
-        knct_dataset = KNCTDataset.load(tokenizer)
-
-        dataset = knct_dataset
+        dataset = ConcatDataset(
+            [
+                KorLang8Dataset.load(tokenizer),
+                # KNCTDataset.load(tokenizer),
+            ]
+        )
         shuffled_indices = torch.randperm(len(dataset)).tolist()
 
         # split train & val dataset

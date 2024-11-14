@@ -90,4 +90,4 @@ class Trainer:
                 outputs = model(inputs)
 
                 answer = outputs.squeeze().argmax().bool().item()
-                print(f"[Text] {sentence} ({answer})")
+                print(f"[Text] {sentence} ({'O' if answer else 'X'})")
